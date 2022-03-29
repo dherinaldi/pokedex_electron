@@ -1,0 +1,19 @@
+{
+  "name": "exam2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^11.5.0",
+    "electron-packager": "^15.4.0"
+  },
+  "dependencies": {
+    "axios": "^0.26.1"
+  },
+  "package": "electron-packager ."
+}
