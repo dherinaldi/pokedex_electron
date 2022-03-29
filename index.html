@@ -1,105 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Weather App</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Quick's Pokedex</title>
+    <!-- <link rel="stylesheet" href="pokemon.css" /> -->
+    <link href="https://fonts.googleapis.com/css?family=Rubik&display=swap" rel="stylesheet" />
+
+    <style>
+        body {
+            background-color: orangered;
+            color: white;
+            margin: 0;
+            font-family: rubik;
+        }
+
+        .container {
+            padding: 40px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-transform: uppercase;
+            text-align: center;
+            font-size: 54px;
+        }
+
+        #pokedex {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-gap: 20px;
+            padding-inline-start: 0;
+        }
+
+        .card {
+            list-style: none;
+            padding: 40px;
+            background-color: #f4f4f4;
+            color: #222;
+            text-align: center;
+        }
+
+        .card:hover {
+            animation: bounce 0.5s linear;
+            cursor: pointer;
+        }
+
+        .card-title {
+            text-transform: capitalize;
+            margin-bottom: 0px;
+            font-size: 32px;
+            font-weight: normal;
+        }
+        .card-subtitle {
+            margin-top: 5px;
+            color: #666;
+            font-weight: lighter;
+        }
+
+        .card-image {
+            height: 180px;
+        }
+
+        @keyframes bounce {
+            20% {
+                transform: translateY(-6px);
+            }
+            40% {
+                transform: translateY(0px);
+            }
+
+            80% {
+                transform: translateY(-2px);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        .popup{
+            position: fixed;
+            top:0;
+            left:0;
+            height: 100vh;
+            width: 100vw;
+            background: #f4f4f4;
+            opacity: 0.95;
+            display: flex;
+            justify-content :center;
+            align-items:center;
+        }
+
+        #closeBtn{
+            position: absolute;
+            top:20px;
+            right:20px;
+        }
+
+        button {
+            background-color: orangered;
+            padding: 10px 20px;
+            border :none;
+            color: white;
+            border-radius :3px;
+            transition: transform 100ms;
+        }
+
+        button :hover{
+            cursor:pointer;
+            transform:translateY(-1px);
+            box-shadow: 0px 1px 2px;
+            darkred;
+        }
+    </style>
+
 </head>
 
-<body style="text-align: center; font-size: large; background-color: bisque;">
-  <h1>TODAY'S WEATHER <id id="jam"></id></h1>
-  <div class="message">
-    Press <strong> Ctrl + W (or) File->Enter city </strong> to open a new window to enter input.
-  </div>
-  <button id="load_data">load Data</button>
-  <div class="info" style="margin: 10px 10px;">
-    <div class="city"><span id="city-name"> </span></div>
-    <div class="city"><span id="city-weather"> </span></div>
-    <div class="city"><span id="city-temp"> </span></div>
-  </div>
+<body>
+    <div class="container">
+        <h1>Quick's Pokedex</h1>
+        <ul id="pokedex"></ul>
+    </div>
+    <script type="text/javascript">
+        const pokeCache = {};
+        const pokedex = document.getElementById('pokedex');
+
+        const fetchPokData = async ()=>{
+            const url = `https://pokeapi.co/api/v2/pokemon?limit=50`;
+            const res = await fetch(url);
+            const data = await res.json();
+            const pokemon =
+            data.results.map((res,index) =>
+                ({  ...res,
+                    id : index+1,
+                    image :`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${index+1}.png`,
+                    image_back : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${index+1}.png`
+                }))
+
+            displayData(pokemon);
+        }
+
+
+        const displayData = (pokemon)=>{
+            const pokeHtml = pokemon.map(pokeman =>
+                `<li class="card" onclick="selectedPokemon('${pokeman.id}')">
+                <img class="card-image" src="${pokeman.image}"/>
+                <h2 class="card-title">${pokeman.id}. ${pokeman.name} </h2>
+            </li>`
+            ).join('');
+            pokedex.innerHTML = pokeHtml;
+        }
+
+        const selectedPokemon = async (id)=>{
+            if(!pokeCache[id]){
+                const url = `https://pokeapi.co/api/v2/pokemon/${id}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                pokeCache[id] = data;
+                displayPopup(data);
+            }else{
+                displayPopup(pokeCache[id]);
+            }
+        }
+
+        const displayPopup = (pokemon)=>{
+            const stat = pokemon.stats.map((stat)=>
+                `${stat.base_stat}<a class="btn btn-info" href="#" onclick="selStat('${stat.stat.url}');" role="button">${stat.stat.name}</a>`).join(` | `);
+
+
+            const type = pokemon.types.map((type) => type.type.name).join(', ');
+            const ability = pokemon.abilities.map(res=>res.ability.name).join(', ');
+            const image = pokemon.sprites['front_shiny'];
+            const pokeHtml =`
+            <div class="popup">
+                <button id="closeBtn" onclick="closePopup()">Close</button>
+                <div class="card">
+                    <img class="card-image" src="${image}"/>
+                    <h2 class="card-title">${pokemon.id}. ${pokemon.name}</h2>
+                    <p class="card-subtitle">Type: ${type} | Weight : ${pokemon.weight} | Ability : ${ability}</p>
+                    <p class="card-subtitle">Data ${stat} </p>
+                    <div class="detail"></div>
+                </div>
+            </div>
+            `;
+
+            pokedex.innerHTML = pokeHtml + pokedex.innerHTML ;
+        }
+
+        const selStat = async (url)=>{
+            const res = await fetch(url);
+            const data = await res.json();
+            console.log(data);
+            displayStat(data);
+        }
+
+        const getData =  async (url)=>{
+            const res = await fetch(url);
+            const data = await res.json();
+            console.log(data);
+
+            const datHtml = ` id : ${data.id} name : ${data.name} lang : ${data.names[4].language.name} ${data.names[4].name} `;
+
+            const popup = document.querySelector('.detail');
+            popup.innerHTML = datHtml;
+
+        };
+
+
+
+        const displayStat = (stat)=>{
+            const pokeHTML = `<p class="card-title"> ${stat.names[6].language.name} ${stat.names[6].name}</p>
+            <a class="card-subtitle" href="#" onclick="getData('${stat.names[6].language.url}')" role="button">More...</a>`;
+            const popup = document.querySelector('.detail');
+            popup.innerHTML =  popup.innerHTML + pokeHTML ;
+        }
+
+
+
+        const closePopup = () =>{
+            const popup = document.querySelector('.popup');
+            popup.parentElement.removeChild(popup);
+        }
+
+        fetchPokData();
+
+    </script>
+
 </body>
-<style>
-  #jam {
-    font-family: monospace;
-    font-size: 32px;
-    background-color: black;
-    color: greenyellow;
-    text-align: center;
-  }
-</style>
-<script>
-  const {ipcRenderer} = require("electron");
-  const axios = require('axios');
 
-    //Receives the input from main process
-    ipcRenderer.on("city:find", (e, city) => {
-      fetchData(city);
-      console.log(city)
-    });
-
-    document.getElementById('load_data').addEventListener('click', async () => {
-      console.log(`load_data`);
-      fetchData();
-      /*const isDarkMode = await window.darkMode.toggle()
-      document.getElementById('theme-source').innerHTML = isDarkMode ? 'Dark' : 'Light'*/
-    })
-
-    //Function to fetch data from API
-    function fetchData(city) {      
-      //https://jsonplaceholder.typicode.com/comments?postId=2
-
-      axios.get('https://jsonplaceholder.typicode.com/comments?postId=2', {})
-      .then((response) => {
-    // Here you can handle the API response
-    // Maybe you want to add to your HTML via JavaScript?
-    //console.log(response.data[0].name);
-    //displayWeather(response.data);
-    displayData(response.data);
-  })
-      .catch((error) => {
-        console.error(error);
-      });
-      /*fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city}&APPID=b1b15e88fa797225412429c1c50c122a1&units=metric`
-      )
-        .then(function (weather) {
-          return weather.json();
-        })
-        .then(displayWeather);*/
-      }
-
-    //Function to display the data
-    function displayWeather(weather) {      
-      document.getElementById("city-name").innerHTML =
-      `<strong> Email:  </strong> ${weather.email}, ${weather.id}`;
-      document.getElementById("city-weather").innerHTML =
-      `<strong> Name:  </strong> ${weather.name} ${weather.body}`;
-      
-    }
-
-    const displayData = (data) => {        
-      const pokemonHTMLString = data
-      .map(
-        (dat) => `
-        <li class="card">
-        <strong> Email:  </strong>  : ${dat.email}
-        <strong> Name:  </strong>  : ${dat.name}
-        <strong> Isi:  </strong>  : ${dat.body}
-        </li>
-        `
-        )
-      .join('');
-      document.getElementById("city-name").innerHTML = pokemonHTMLString;
-    };
-
-    function getTime() {
-      time = new Date().toLocaleTimeString();
-      document.getElementById("jam").innerHTML = time;
-    }
-    setInterval(getTime, 1000);
-
-    fetchData();
-
-
-  </script>
-  </html>
+</html>

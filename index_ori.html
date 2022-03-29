@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather App</title>
+</head>
+
+<body style="text-align: center; font-size: large; background-color: bisque;">
+  <h1>TODAY'S WEATHER <id id="jam"></id></h1>
+  <div class="message">
+    Press <strong> Ctrl + W (or) File->Enter city </strong> to open a new window to enter input.
+  </div>
+  <button id="load_data">load Data</button>
+  <div class="info" style="margin: 10px 10px;">
+    <div class="city"><span id="city-name"> </span></div>
+    <div class="city"><span id="city-weather"> </span></div>
+    <div class="city"><span id="city-temp"> </span></div>
+  </div>
+</body>
+<style>
+  #jam {
+    font-family: monospace;
+    font-size: 32px;
+    background-color: black;
+    color: greenyellow;
+    text-align: center;
+  }
+</style>
+<script>
+  const {ipcRenderer} = require("electron");
+  const axios = require('axios');
+
+    //Receives the input from main process
+    ipcRenderer.on("city:find", (e, city) => {
+      fetchData(city);
+      console.log(city)
+    });
+
+    document.getElementById('load_data').addEventListener('click', async () => {
+      console.log(`load_data`);
+      fetchData();
+      /*const isDarkMode = await window.darkMode.toggle()
+      document.getElementById('theme-source').innerHTML = isDarkMode ? 'Dark' : 'Light'*/
+    })
+
+    //Function to fetch data from API
+    function fetchData(city) {      
+      //https://jsonplaceholder.typicode.com/comments?postId=2
+
+      axios.get('https://jsonplaceholder.typicode.com/comments?postId=2', {})
+      .then((response) => {
+    // Here you can handle the API response
+    // Maybe you want to add to your HTML via JavaScript?    
+    //displayWeather(response.data);
+    displayData(response.data);
+  })
+      .catch((error) => {
+        console.error(error);
+      });
+      /*fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${city}&APPID=b1b15e88fa797225412429c1c50c122a1&units=metric`
+      )
+        .then(function (weather) {
+          return weather.json();
+        })
+        .then(displayWeather);*/
+      }
+
+    //Function to display the data
+    function displayWeather(weather) {      
+      document.getElementById("city-name").innerHTML =
+      `<strong> Email:  </strong> ${weather.email}, ${weather.id}`;
+      document.getElementById("city-weather").innerHTML =
+      `<strong> Name:  </strong> ${weather.name} ${weather.body}`;
+      
+    }
+
+    const displayData = (data) => {        
+      const pokemonHTMLString = data
+      .map(
+        (dat) => `
+        <li class="card">
+        <strong> Email:  </strong>  : ${dat.email}
+        <strong> Name:  </strong>  : ${dat.name}
+        <strong> Isi:  </strong>  : ${dat.body}
+        </li>
+        `
+        )
+      .join('');
+      document.getElementById("city-name").innerHTML = pokemonHTMLString;
+    };
+
+    function getTime() {
+      time = new Date().toLocaleTimeString();
+      document.getElementById("jam").innerHTML = time;
+    }
+    setInterval(getTime, 1000);
+
+    fetchData();
+
+
+  </script>
+  </html>
